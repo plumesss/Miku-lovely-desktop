@@ -54,9 +54,14 @@ jobs:
           node src/verify_windows.cjs
           if ($LASTEXITCODE -ne 0) { throw 'Archive verification failed' }
           $installer = (Get-ChildItem dist/windows/*-Setup.exe).FullName
-          $target = "$env:RUNNER_TEMP/MikuDeskPet-installed"
-          $p = Start-Process -FilePath $installer -ArgumentList @('/S', "/D=$target") -Wait -PassThru
+          $target = Join-Path $env:RUNNER_TEMP 'MikuDeskPet-installed'
+          $p = Start-Process -FilePath $installer -ArgumentList @('/S', '/currentuser', "/D=$target") -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "Install failed: $($p.ExitCode)" }
+          if (-not (Test-Path "$target/resources/app.asar")) {
+            Get-ChildItem $target -Recurse -ErrorAction SilentlyContinue | Select-Object -First 20 FullName
+            Get-ChildItem "$env:LOCALAPPDATA/Programs" -Recurse -Filter app.asar -ErrorAction SilentlyContinue | Select-Object FullName
+            throw 'Installer did not create the selected installation directory'
+          }
           node src/verify_windows.cjs "$target/resources"
           if ($LASTEXITCODE -ne 0) { throw 'Installed archive verification failed' }
           $exe = (Get-ChildItem $target/*.exe | Where-Object Name -NotMatch 'Uninstall' | Select-Object -First 1).FullName
