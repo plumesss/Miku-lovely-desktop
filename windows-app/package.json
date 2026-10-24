@@ -52,7 +52,8 @@
       "target": "nsis",
       "icon": "app.ico",
       "signAndEditExecutable": true,
-      "artifactName": "MikuDeskPet-${version}-Windows-x64-Setup.exe"
+      "artifactName": "MikuDeskPet-${version}-Windows-x64-Setup.exe",
+      "signExecutable": false
     },
     "nsis": {
       "oneClick": false,
@@ -66,6 +67,12 @@
       ],
       "language": "2052",
       "license": "NOTICE.txt"
-    }
-  }
+    },
+    "publish": []
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/plumesss/Miku-lovely-desktop.git"
+  },
+  "homepage": "https://github.com/plumesss/Miku-lovely-desktop"
 }
