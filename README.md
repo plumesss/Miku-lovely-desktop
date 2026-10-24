@@ -64,6 +64,7 @@ open dist/MikuDeskPet-0.1.1-macOS-Universal.dmg
 ```sh
 cd windows-app
 npm ci
+node node_modules/electron/install.js
 npm run check
 npm start
 ```

@@ -12,6 +12,7 @@
 
 ```sh
 npm ci
+node node_modules/electron/install.js
 npm run check
 npm start
 ```

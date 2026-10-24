@@ -59,6 +59,7 @@ Electron 版在项目根目录执行：
 ```sh
 cd windows-app
 npm ci
+node node_modules/electron/install.js
 npm run check
 npm run smoke
 npm run build:win
