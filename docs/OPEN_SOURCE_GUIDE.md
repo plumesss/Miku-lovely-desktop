@@ -140,13 +140,15 @@ git push -u origin main
 源码仓库供开发者阅读与构建，Releases 供普通用户下载安装包。
 
 1. 确认上传代码与安装包相对应，素材许可记录完整，安装包包含所需许可证文件。
-2. 核对版本号：macOS 在 `src/Info.plist`；Windows 在 `windows-app/package.json`、锁文件及当前写死版本的 `build.win.artifactName`。更新版本后重新构建，不只给旧包改文件名。
-3. 在仓库打开 **Releases → Draft a new release**，选择已验证的提交，创建标签，例如 `v1.0.0`。
+2. 核对版本号：macOS 在 `src/Info.plist`；Windows 在 `windows-app/package.json` 及锁文件。Windows 安装包名通过 `build.win.artifactName` 的 `${version}` 自动使用应用版本。更新版本后重新构建，不只给旧包改文件名。
+3. 在仓库打开 **Releases → Draft a new release**，选择已验证的提交，创建标签，例如 `v0.1.0`。
 4. 填写版本说明，包含功能、系统要求、安装步骤、签名情况、已验证平台和已知限制。将 MIT、素材说明及平台所需第三方许可包含在发布归档中。
 5. 上传实际完成构建和检查的 macOS / Windows 发布产物。GitHub 自动生成的 Source code 压缩包不等于安装包。
 6. 预览后点击 **Publish release**，再将 README 的安装说明更新为实际 Release 链接。
 
 当前没有自动发布 workflow、自动生成 Universal DMG 或自动签名、公证配置。
+
+当前 v0.1.0 是首次源码发布，只提供代码和文档，不提供安装包；发布说明见 [v0.1.0](releases/v0.1.0.md)。完整应用的素材分发授权和目标系统实机验证仍需补齐。
 
 ## 8. 后续维护方式
 

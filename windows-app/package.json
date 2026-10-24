@@ -1,6 +1,6 @@
 {
   "name": "miku-desk-pet",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "初音桌宠 Windows 版",
   "author": "MikuDeskPet",
   "license": "MIT",
@@ -30,7 +30,7 @@
       "target": "nsis",
       "icon": "app.ico",
       "signAndEditExecutable": false,
-      "artifactName": "MikuDeskPet-1.0.0-Windows-x64-Setup.exe"
+      "artifactName": "MikuDeskPet-${version}-Windows-x64-Setup.exe"
     },
     "nsis": {
       "oneClick": false,
