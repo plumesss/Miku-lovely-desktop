@@ -60,6 +60,8 @@ jobs:
           node src/verify_windows.cjs "$target/resources"
           if ($LASTEXITCODE -ne 0) { throw 'Installed archive verification failed' }
           $exe = (Get-ChildItem $target/*.exe | Where-Object Name -NotMatch 'Uninstall' | Select-Object -First 1).FullName
+          $version = (Get-Content windows-app/package.json | ConvertFrom-Json).version
+          if ((Get-Item $exe).VersionInfo.ProductVersion -ne $version) { throw 'Windows executable product version mismatch' }
           $env:MIKU_SMOKE_OUTPUT = "$env:RUNNER_TEMP/smoke.png"
           $p = Start-Process -FilePath $exe -ArgumentList '--smoke-test' -RedirectStandardOutput "$env:RUNNER_TEMP/smoke.log" -RedirectStandardError "$env:RUNNER_TEMP/smoke.err" -PassThru
           if (-not $p.WaitForExit(90000)) { $p.Kill(); throw 'Smoke test timeout' }

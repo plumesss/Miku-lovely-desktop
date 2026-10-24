@@ -51,7 +51,7 @@
     "win": {
       "target": "nsis",
       "icon": "app.ico",
-      "signAndEditExecutable": false,
+      "signAndEditExecutable": true,
       "artifactName": "MikuDeskPet-${version}-Windows-x64-Setup.exe"
     },
     "nsis": {
