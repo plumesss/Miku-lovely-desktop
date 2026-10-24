@@ -2,7 +2,8 @@ const { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, screen } = require
 const fs = require('node:fs');
 const path = require('node:path');
 const smoke = process.argv.includes('--smoke-test');
-const initial = {skin:'crayon', size:280, opacity:1, sound:true, volume:0.8, motion:true, hourly:true, mood:70, city:'', weather:'none'};
+const voiceAvailable = Array.from({length:10},(_,i)=>path.join(__dirname,'assets/sounds/voice_'+String(i+1).padStart(2,'0')+'.m4a')).every(p=>fs.existsSync(p));
+const initial = {skin:'crayon', size:280, opacity:1, sound:voiceAvailable, volume:0.8, motion:true, hourly:true, mood:70, city:'', weather:'none'};
 let prefs = {...initial}, pet, settings, tray, drag, store;
 app.setAppUserModelId('com.miku.deskpet.windows');
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
@@ -15,7 +16,7 @@ function save() {
   fs.writeFileSync(store+'.tmp', JSON.stringify(prefs,null,2));
   fs.renameSync(store+'.tmp', store);
 }
-function config() { return {...prefs, login:app.getLoginItemSettings().openAtLogin}; }
+function config() { return {...prefs, sound:voiceAvailable && prefs.sound, voiceAvailable, login:app.getLoginItemSettings().openAtLogin}; }
 function broadcast() {
   for (const w of [pet,settings]) if (w && !w.isDestroyed()) w.webContents.send('config',config());
 }
@@ -29,6 +30,7 @@ function update(values) {
   if (typeof values.city==='string') prefs.city=values.city.trim().slice(0,80);
   if (['none','sun','rain','snow','stars','cherry','maple'].includes(values.weather)) prefs.weather=values.weather;
   if (typeof values.login==='boolean' && !smoke) app.setLoginItemSettings({openAtLogin:values.login});
+  if (!voiceAvailable) prefs.sound=false;
   pet.setOpacity(prefs.opacity);
   const {x,y,width:w,height:h}=pet.getBounds();
   const height=Math.round(prefs.size*1.5+80), width=Math.round(prefs.size*1.2+60);
@@ -53,7 +55,7 @@ function menu() {
     {label:'🎭 切换形象',submenu:[['crayon','蜡笔初音'],['standard','标准初音'],['chibi','Q版初音']].map(([skin,label])=>({label,type:'radio',checked:prefs.skin===skin,click:()=>update({skin})}))},
     {label:'🥬 投喂大葱',click:()=>action('feed')},
     {label:'💬 聊聊天',click:()=>action('chat')},
-    {label:'🎤 演示语音口型',click:()=>action('speech')},
+    ...(voiceAvailable ? [{label:'🎤 演示语音口型',click:()=>action('speech')}] : []),
     {label:'▶ 演示动作',click:()=>action('motion')},
     {label:'天气与季节特效',submenu:[['none','关闭'],['sun','晴天'],['rain','下雨'],['snow','下雪'],['stars','流星'],['cherry','樱花'],['maple','枫叶']].map(([weather,label])=>({label,type:'radio',checked:prefs.weather===weather,click:()=>update({weather})}))},
     {type:'separator'}, {label:'⚙ 设置…',click:openSettings},
@@ -75,6 +77,7 @@ ipcMain.on('drag',(e,phase)=>{
 app.whenReady().then(()=>{
   store=path.join(app.getPath('userData'),'preferences.json');
   if(!smoke)try{const v=JSON.parse(fs.readFileSync(store,'utf8'));for(const k of Object.keys(initial))if(typeof v[k]===typeof initial[k])prefs[k]=v[k];}catch{}
+  if (!voiceAvailable) prefs.sound=false;
   const a=screen.getPrimaryDisplay().workArea, width=Math.round(prefs.size*1.2+60),height=Math.round(prefs.size*1.5+80);
   pet=new BrowserWindow({width,height,x:a.x+a.width-width-50,y:a.y+a.height-height-20,transparent:true,frame:false,resizable:false,hasShadow:false,
     alwaysOnTop:true,skipTaskbar:true,show:!smoke,webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:false}});
@@ -94,9 +97,10 @@ app.whenReady().then(()=>{
       console.log('SMOKE:',JSON.stringify(result));
       if(result.ok){
         const shot=await pet.webContents.capturePage();
-        fs.writeFileSync(process.env.MIKU_SMOKE_OUTPUT || path.join(__dirname,'../分享安装包/.build/windows-preview.png'),shot.toPNG());
+        const output=process.env.MIKU_SMOKE_OUTPUT || path.join(app.getPath('temp'),'miku-deskpet-smoke-preview.png');
+        fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,shot.toPNG());
         openSettings(); await new Promise(resolve=>settings.webContents.once('did-finish-load',resolve));
-        const settingsOK=await settings.webContents.executeJavaScript('document.querySelectorAll("input, select, button").length >= 10');
+        const settingsOK=await settings.webContents.executeJavaScript('document.querySelectorAll("input, select, button").length >= 10') && (voiceAvailable || await settings.webContents.executeJavaScript('["sound","volume","speech"].every(id=>document.getElementById(id).disabled)'));
         console.log('SETTINGS:',settingsOK);clearTimeout(deadline);app.exit(settingsOK?0:1);
       }else{clearTimeout(deadline);app.exit(1);}
     });

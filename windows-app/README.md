@@ -1,6 +1,6 @@
 # 初音桌宠 Windows 版
 
-使用 Electron 和 HTML Canvas 实现透明悬浮桌宠，目标为 Windows 10 / 11 x64。支持三套形象、点击与拖动、动态动作、投喂、预设台词聊天、本地语音及口型、整点问候、天气 / 季节特效、托盘菜单和登录后自动启动设置。
+使用 Electron 和 HTML Canvas 实现透明悬浮桌宠，目标为 Windows 10 / 11 x64。支持三套形象、点击与拖动、动态动作、投喂、预设台词聊天、整点问候、天气 / 季节特效、托盘菜单和登录后自动启动设置。
 
 完整项目介绍、安装及使用方法见 [根目录 README](../README.md)。macOS 原生版的功能面板、送礼物、便签和休息提醒尚未移植到 Windows 版。
 
@@ -23,14 +23,13 @@ npm start
 退出开发中的桌宠后，按需运行：
 
 ```sh
-node -e "require('node:fs').mkdirSync('../分享安装包/.build', {recursive: true})"
 npm run smoke
 npm run build:win
 ```
 
-`npm run check` 检查四个 JavaScript / CommonJS 文件的语法。`npm run smoke` 需要完整 Electron 安装及图形会话，使用独立的临时用户数据目录和隐藏窗口，验证图片、720 帧动画、75 张口型、10 段音频解码、静音播放的口型同步、设置通信及绘制，并输出预览图到 `../分享安装包/.build/windows-preview.png`。该检查不能代替 Windows 实机测试。
+`npm run check` 检查四个脚本的语法。`npm run smoke` 需要完整 Electron 运行时及图形会话，验证立绘、720 帧动画、75 张口型资源、设置通信和绘制；无音频时检查播放无法开启。预览写入系统临时目录，可通过 `MIKU_SMOKE_OUTPUT` 覆盖。公开包不包含语音；有合法本地音频的开发环境才运行额外音频测试。
 
-`npm run build:win` 使用 electron-builder 构建 x64 NSIS 安装包，输出至 `../分享安装包/windows/`。安装包内含 Electron，使用者不需要安装 Node.js。当前未配置发布者代码签名。
+`npm run build:win` 输出 `../dist/windows/MikuDeskPet-0.1.1-Windows-x64-Setup.exe`，始终排除 `assets/sounds/` 及音频文件。包内含 Electron，用户无需 Node.js；未配置发布者签名。运行 `node ../src/verify_windows.cjs` 可核对打包代码、图片、许可文件及音频排除规则。自动化安装与卸载验证见仓库 Windows 发布 workflow。
 
 ## 天气与许可
 

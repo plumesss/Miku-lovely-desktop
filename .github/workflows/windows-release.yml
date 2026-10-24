@@ -1,0 +1,76 @@
+name: Build and verify Windows installer
+on:
+  workflow_dispatch:
+    inputs:
+      draft_tag:
+        description: Existing draft release containing the temporary build input
+        required: true
+        default: v0.1.1
+      resource_sha256:
+        description: SHA256 of windows-build-input.zip
+        required: true
+permissions:
+  contents: write
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      DRAFT_TAG: ${{ inputs.draft_tag }}
+      RESOURCE_SHA256: ${{ inputs.resource_sha256 }}
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: windows-app/package-lock.json
+      - name: Download temporary build input from unpublished draft
+        shell: pwsh
+        run: |
+          gh release download $env:DRAFT_TAG --pattern windows-build-input.zip --dir "$env:RUNNER_TEMP/input"
+          $zip = "$env:RUNNER_TEMP/input/windows-build-input.zip"
+          if ((Get-FileHash $zip -Algorithm SHA256).Hash.ToLower() -ne $env:RESOURCE_SHA256.ToLower()) { throw 'Build input checksum mismatch' }
+          Expand-Archive $zip -DestinationPath . -Force
+          if (Get-ChildItem windows-app/assets -Recurse -Include *.m4a,*.wav,*.mp3,*.ogg) { throw 'Audio in public build input' }
+      - name: Install locked dependencies and check source
+        working-directory: windows-app
+        run: |
+          npm ci
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node node_modules/electron/install.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run check
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm audit --audit-level=moderate
+      - name: Build unsigned NSIS x64 installer
+        working-directory: windows-app
+        run: npm run build:win -- --publish never
+      - name: Verify archive, install, smoke test, uninstall
+        shell: pwsh
+        run: |
+          node src/verify_windows.cjs
+          if ($LASTEXITCODE -ne 0) { throw 'Archive verification failed' }
+          $installer = (Get-ChildItem dist/windows/*-Setup.exe).FullName
+          $target = "$env:RUNNER_TEMP/MikuDeskPet-installed"
+          $p = Start-Process -FilePath $installer -ArgumentList @('/S', "/D=$target") -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Install failed: $($p.ExitCode)" }
+          node src/verify_windows.cjs "$target/resources"
+          if ($LASTEXITCODE -ne 0) { throw 'Installed archive verification failed' }
+          $exe = (Get-ChildItem $target/*.exe | Where-Object Name -NotMatch 'Uninstall' | Select-Object -First 1).FullName
+          $env:MIKU_SMOKE_OUTPUT = "$env:RUNNER_TEMP/smoke.png"
+          $p = Start-Process -FilePath $exe -ArgumentList '--smoke-test' -RedirectStandardOutput "$env:RUNNER_TEMP/smoke.log" -RedirectStandardError "$env:RUNNER_TEMP/smoke.err" -PassThru
+          if (-not $p.WaitForExit(90000)) { $p.Kill(); throw 'Smoke test timeout' }
+          Get-Content "$env:RUNNER_TEMP/smoke.log"
+          Get-Content "$env:RUNNER_TEMP/smoke.err"
+          if ($p.ExitCode -ne 0) { throw "Smoke test failed: $($p.ExitCode)" }
+          if (-not (Select-String -Path "$env:RUNNER_TEMP/smoke.log" -Pattern '"audioIncluded":false' -Quiet)) { throw 'Missing silent-build test result' }
+          $uninstaller = (Get-ChildItem "$target/Uninstall*.exe").FullName
+          $p = Start-Process -FilePath $uninstaller -ArgumentList @('/S', "_?=$target") -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw 'Uninstall failed' }
+          if (Test-Path "$target/resources/app.asar") { throw 'Uninstall left application archive' }
+      - name: Upload only the tested installer to the draft release
+        shell: pwsh
+        run: gh release upload $env:DRAFT_TAG dist/windows/*-Setup.exe --clobber

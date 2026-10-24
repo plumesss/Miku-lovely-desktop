@@ -55,7 +55,7 @@ Local State
 dist/
 build/
 
-# Local-only media: redistribution permission has not been verified.
+# Media stays out of the source repository; silent installers use image resources.
 # See docs/ASSETS.md before building or restoring resources.
 /assets/
 /sounds/

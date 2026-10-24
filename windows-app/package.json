@@ -1,6 +1,6 @@
 {
   "name": "miku-desk-pet",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "初音桌宠 Windows 版",
   "author": "MikuDeskPet",
   "license": "MIT",
@@ -13,18 +13,40 @@
     "build:win": "electron-builder --win nsis --x64"
   },
   "devDependencies": {
-    "electron": "44.9.0",
+    "electron": "44.9.3",
     "electron-builder": "26.15.3"
   },
   "build": {
     "appId": "com.miku.deskpet.windows",
     "productName": "初音桌宠",
     "asar": true,
-    "directories": { "output": "../分享安装包/windows" },
-    "files": ["main.cjs", "preload.cjs", "renderer.js", "settings.js", "*.html", "*.css", "assets/**/*"],
+    "directories": {
+      "output": "../dist/windows"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "renderer.js",
+      "settings.js",
+      "*.html",
+      "*.css",
+      "assets/**/*",
+      "!assets/sounds/**/*",
+      "!assets/**/*.m4a",
+      "!assets/**/*.wav",
+      "!assets/**/*.mp3",
+      "!assets/**/*.ogg",
+      "!assets/**/*.icns"
+    ],
     "extraResources": [
-      { "from": "../LICENSE", "to": "LICENSE" },
-      { "from": "../THIRD_PARTY_NOTICES.md", "to": "THIRD_PARTY_NOTICES.md" }
+      {
+        "from": "../LICENSE",
+        "to": "LICENSE"
+      },
+      {
+        "from": "../THIRD_PARTY_NOTICES.md",
+        "to": "THIRD_PARTY_NOTICES.md"
+      }
     ],
     "win": {
       "target": "nsis",
@@ -38,7 +60,10 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "shortcutName": "初音桌宠",
-      "installerLanguages": ["zh_CN", "en_US"],
+      "installerLanguages": [
+        "zh_CN",
+        "en_US"
+      ],
       "language": "2052",
       "license": "NOTICE.txt"
     }

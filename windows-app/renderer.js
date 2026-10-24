@@ -106,15 +106,16 @@ async function smoke(){
   for(const skin of names)for(const state of states){const key=skin+'_'+state;const im=await image(key+'.png');if(!im.width)throw Error(key);images++;const atlas=await image('animation/'+key+'.png',true);if(atlas.width%8||atlas.height%6)throw Error('动态图集尺寸异常：'+key);frames+=48;
    for(let i=0;i<5;i++){const mouth=await image('mouths/'+key+'_'+i+'.png');if(!mouth.width)throw Error('口型素材异常');mouths++;}
   }
-  audioSetup();for(let n=1;n<=10;n++){const r=await fetch('assets/sounds/voice_'+String(n).padStart(2,'0')+'.m4a');const audio=await audioContext.decodeAudioData(await r.arrayBuffer());if(audio.duration<=0)throw Error('语音解码失败');voices++;}
+  if(prefs.voiceAvailable){audioSetup();for(let n=1;n<=10;n++){const r=await fetch('assets/sounds/voice_'+String(n).padStart(2,'0')+'.m4a');const audio=await audioContext.decodeAudioData(await r.arrayBuffer());if(audio.duration<=0)throw Error('语音解码失败');voices++;}}
   await petAPI.setConfig({skin:'standard',volume:.4});const updated=await petAPI.getConfig();if(updated.skin!=='standard'||updated.volume!==.4)throw Error('设置未生效');
   await petAPI.setConfig({skin:'crayon',volume:.8});applyConfig(await petAPI.getConfig());tempState='happy';until=Date.now()+10000;say('你好呀～我是初音未来，来陪你啦♪');
   await image('crayon_happy.png');await image('animation/crayon_happy.png',true);await new Promise(r=>setTimeout(r,500));
-  analyser.disconnect();const muted=audioContext.createGain();muted.gain.value=0;analyser.connect(muted);muted.connect(audioContext.destination);
-  await speak(1);let peak=0,lipPeak=0;for(let i=0;i<20;i++){await new Promise(r=>setTimeout(r,100));analyser.getFloatTimeDomainData(samples);for(const sample of samples)peak=Math.max(peak,Math.abs(sample));lipPeak=Math.max(lipPeak,lip);}
-  const playback=activeAudio?.currentTime>.1;if(!playback||peak<.0001||lipPeak<=0)throw Error('语音播放或口型同步未工作');stopVoice();
+  let playback=false,lipPeak=0;
+  if(prefs.voiceAvailable){analyser.disconnect();const muted=audioContext.createGain();muted.gain.value=0;analyser.connect(muted);muted.connect(audioContext.destination);
+  await speak(1);let peak=0;for(let i=0;i<20;i++){await new Promise(r=>setTimeout(r,100));analyser.getFloatTimeDomainData(samples);for(const sample of samples)peak=Math.max(peak,Math.abs(sample));lipPeak=Math.max(lipPeak,lip);}
+  playback=activeAudio?.currentTime>.1;if(!playback||peak<.0001||lipPeak<=0)throw Error('语音播放或口型同步未工作');stopVoice();}else{await petAPI.setConfig({sound:true});const c=await petAPI.getConfig();if(c.sound||c.voiceAvailable)throw Error('无语音版本不应允许启用语音');}
   let opaque=0;const pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;for(let i=3;i<pixels.length;i+=4)if(pixels[i]>20)opaque++;if(opaque<500)throw Error('桌宠绘制为空');
-  petAPI.smokeResult({ok:true,images,frames,mouths,voices,opaque,settings:true,playback,lipsync:lipPeak>0});
+  petAPI.smokeResult({ok:true,images,frames,mouths,voices,opaque,settings:true,audioIncluded:prefs.voiceAvailable,playback,lipsync:lipPeak>0});
  }catch(e){console.error(e);petAPI.smokeResult({ok:false,error:e.stack});}
 }
 (async()=>{try{const initialConfig=await petAPI.getConfig();manifest=await fetch('assets/mouths/manifest.json').then(r=>r.json());applyConfig(initialConfig);requestAnimationFrame(frame);

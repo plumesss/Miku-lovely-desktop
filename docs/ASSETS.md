@@ -1,6 +1,6 @@
 # 本地资源准备与公开范围
 
-公开源码只包含程序和文档，**不包含角色图片、动画、口型、语音及图标，不能直接启动完整桌宠**。这些文件的公开再分发授权尚未核实，当前本机副本保留用于本地开发，并通过 `.gitignore` 和源码导出白名单排除。
+公开源码只包含程序和文档，**不包含角色图片、动画、口型、语音及图标，不能直接启动完整桌宠**。v0.1.1 安装包内含运行所需的三套初音形象，按非商业角色条款处理，但不另行提供素材文件下载。来源声明及核对依据见 `THIRD_PARTY_NOTICES.md`。本机素材通过 `.gitignore` 和源码导出白名单排除。
 
 请自行准备有权使用的资源。不要从旧安装包提取素材后直接重新公开；获得允许公开分发的授权后，再更新 `THIRD_PARTY_NOTICES.md` 和发布规则。
 
@@ -9,10 +9,10 @@
 | 位置 | 文件要求 |
 | --- | --- |
 | `assets/` | 三个前缀 `miku`、`miku_chibi`、`miku_crayon`，各自对应 `idle`、`blink`、`happy`、`sad`、`sleep` 五个状态的透明 PNG，共 15 张；例如 `miku_idle.png` |
-| `sounds/` | `voice_selfep_piapro_21_01.m4a` 至 `voice_selfep_piapro_21_10.m4a` 共 10 段有效 M4A；名称是现有代码约定，不代表音频授权 |
+| `sounds/` | 不需要。公开构建始终不读取或复制本地音频 |
 | `src/AppIcon.icns` | macOS 应用图标，可用有权使用的图片运行 `make_icon.py` 生成 |
 
-`bash src/build.sh` 会先检查以上输入，缺少时给出资源说明并退出；检查通过后才生成图集、口型并替换应用。它只读取项目内音频，不搜索临时下载目录。生成的 `assets/animation/` 和 `assets/mouths/` 也是本地资源，不随源码导出。
+`bash src/build.sh` 会先检查以上输入，缺少时给出资源说明并退出；检查通过后才生成图集、口型并在系统临时目录组装通用应用及 DMG，不覆盖根目录旧应用，也不读取音频。生成的 `assets/animation/` 和 `assets/mouths/` 也是本地资源，不随源码导出。
 
 动画脚本按原立绘布局生成图集；口型脚本中的 `POLYS`、`RIGS`、`DONORS` 是针对原画校准的像素位置。换用其他图片时，需要同步修改 `src/make_motion.py` 和 `src/make_mouths.py` 的布局参数，不能只改图片文件名就保证动画和口型正确。
 
@@ -42,8 +42,10 @@ python3 src/make_icon.py --input ./assets/miku_idle.png
 - 顶层使用 `standard`、`chibi`、`crayon` 三个前缀和上述五个状态，共 15 张 PNG。标准版从根目录的 `miku_*.png` 对应到 `standard_*.png`，另外两版分别对应 `chibi_*.png`、`crayon_*.png`。
 - `animation/`：复制生成的 15 张图集和 `manifest.json`。
 - `mouths/`：复制生成的 75 张口型图及 `manifest.json`。
-- `sounds/`：放置 `voice_01.m4a` 至 `voice_10.m4a`，对应已准备的十段本地音频。
+- `sounds/` 不需要。无音频时播放功能关闭，公开 Windows 打包规则还会明确排除该目录及音频扩展名。
 - 打包所需图标放在 `windows-app/app.ico`，使用自行拥有使用权的有效 ICO 文件。
+
+运行 `python3 src/prepare_windows.py` 可从根目录图片和已生成的图集、口型同步这些资源，并从同一立绘生成 Windows 图标（需要 Pillow）；不复制任何音频。
 
 资源准备完成后再执行 `npm start`、`npm run smoke` 或 `npm run build:win`。原来的本机资源仍在原目录，因此本次公开范围调整不会删除本机桌宠素材。
 

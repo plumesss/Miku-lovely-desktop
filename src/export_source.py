@@ -6,7 +6,8 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 ROOT = Path(__file__).resolve().parent.parent
 PUBLIC_FILES = (
     ".gitignore", "LICENSE", "README.md", "THIRD_PARTY_NOTICES.md",
-    "docs/ASSETS.md", "docs/OPEN_SOURCE_GUIDE.md", "docs/releases/v0.1.0.md",
+    "docs/ASSETS.md", "docs/OPEN_SOURCE_GUIDE.md", "docs/releases/v0.1.0.md", "docs/releases/v0.1.1.md",
+    ".github/workflows/windows-release.yml", "src/prepare_windows.py", "src/verify_windows.cjs",
     "src/main.swift", "src/PetMotion.swift", "src/PetSpeech.swift",
     "src/Info.plist", "src/build.sh", "src/chroma_key.py",
     "src/chroma_key_chibi.py", "src/make_icon.py", "src/make_motion.py",

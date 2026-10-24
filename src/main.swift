@@ -100,7 +100,7 @@ struct Lines {
     ]
 }
 
-// MARK: - 语音播放（初音未来官方语音）
+// MARK: - 可选本地语音（公开构建不包含语音资源）
 
 final class SoundManager: NSObject, AVAudioPlayerDelegate {
     static let shared = SoundManager()
@@ -131,7 +131,8 @@ final class SoundManager: NSObject, AVAudioPlayerDelegate {
         if player === activePlayer { stop() }
     }
 
-    var enabled: Bool { defaults.object(forKey: kSoundOn) == nil || defaults.bool(forKey: kSoundOn) }
+    var available: Bool { Bundle.main.url(forResource: "voice_01", withExtension: "m4a", subdirectory: "sounds") != nil }
+    var enabled: Bool { available && (defaults.object(forKey: kSoundOn) == nil || defaults.bool(forKey: kSoundOn)) }
     var volume: Float { defaults.object(forKey: kSoundVolume) == nil ? 0.8 : defaults.float(forKey: kSoundVolume) }
 
     func play(_ name: String) {
@@ -599,7 +600,7 @@ private struct OpenMeteoResponse: Decodable {
 }
 
 @MainActor
-final class WeatherController: NSObject, CLLocationManagerDelegate {
+final class WeatherController: NSObject, @preconcurrency CLLocationManagerDelegate {
     static let shared = WeatherController()
     private let locationManager = CLLocationManager()
     private weak var pet: PetController?
@@ -714,13 +715,13 @@ final class WeatherController: NSObject, CLLocationManagerDelegate {
             do {
                 var request = URLRequest(url: url)
                 request.timeoutInterval = 15
-                let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0"
+                let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.1"
                 request.setValue("MikuDeskPet/\(version)", forHTTPHeaderField: "User-Agent")
                 let (data, response) = try await URLSession.shared.data(for: request)
                 guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
                     let code = (response as? HTTPURLResponse)?.statusCode ?? -1
                     NSLog("[miku] weather HTTP status: %d", code)
-                    await self?.applyFailure()
+                    self?.applyFailure()
                     return
                 }
                 guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -729,13 +730,13 @@ final class WeatherController: NSObject, CLLocationManagerDelegate {
                       let code = (current["weather_code"] as? NSNumber)?.intValue,
                       let isDay = (current["is_day"] as? NSNumber)?.intValue else {
                     NSLog("[miku] weather response parse failed: %@", String(data: data, encoding: .utf8) ?? "<non-UTF8>")
-                    await self?.applyFailure()
+                    self?.applyFailure()
                     return
                 }
-                await self?.apply(.init(temperature_2m: temperature, weather_code: code, is_day: isDay))
+                self?.apply(.init(temperature_2m: temperature, weather_code: code, is_day: isDay))
             } catch {
                 NSLog("[miku] weather request failed: %@", error.localizedDescription)
-                await self?.applyFailure()
+                self?.applyFailure()
             }
         }
     }
@@ -937,8 +938,9 @@ final class PetController: NSObject, NSWindowDelegate {
         weatherTimer = nil
         guard effect != .none else { return }
         weatherTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
-            guard let self else { return }
-            self.figure.weatherPhase += 0.035
+            Task { @MainActor [weak self] in
+                self?.figure.weatherPhase += 0.035
+            }
         }
     }
 
@@ -1067,7 +1069,9 @@ final class PetController: NSObject, NSWindowDelegate {
         motionItem.target = self
         motionItem.state = figure.motion.enabled ? .on : .off
         menu.addItem(motionItem)
-        menu.addItem(withTitle: "🎤 演示语音口型", action: #selector(demoSpeech), keyEquivalent: "").target = self
+        if SoundManager.shared.available {
+            menu.addItem(withTitle: "🎤 演示语音口型", action: #selector(demoSpeech), keyEquivalent: "").target = self
+        }
         menu.addItem(withTitle: "▶️ 演示桌宠动作", action: #selector(demoMotion), keyEquivalent: "").target = self
         menu.addItem(withTitle: "🎭 切换形象（当前：\(skinNameLabel)）", action: #selector(cycleSkin), keyEquivalent: "").target = self
         menu.addItem(withTitle: "🥬 投喂大葱", action: #selector(feedAction), keyEquivalent: "").target = self
@@ -1457,6 +1461,9 @@ final class SettingsController: NSObject {
         hourlyCheck.state = defaults.object(forKey: kHourly) == nil || defaults.bool(forKey: kHourly) ? .on : .off
         loginCheck.state = LaunchAgent.isInstalled() ? .on : .off
         soundCheck.state = SoundManager.shared.enabled ? .on : .off
+        soundCheck.isEnabled = SoundManager.shared.available
+        soundCheck.title = SoundManager.shared.available ? "初音语音" : "本版无语音"
+        volumeSlider.isEnabled = SoundManager.shared.available
         volumeSlider.doubleValue = Double(SoundManager.shared.volume)
         let m = pet?.mood ?? 60
         moodLabel.stringValue = m >= 75 ? "😊 开心 (\(m)/100)" : (m >= 30 ? "🙂 平静 (\(m)/100)" : "😢 低落 (\(m)/100) · 多点点她")
@@ -1514,12 +1521,15 @@ final class SettingsController: NSObject {
         alert.informativeText = """
         一只住在你桌面上的初音未来 ♪
 
-        · 立绘素材：AI 厚涂插画风生成（标准版 / Q版）
+        · 三套 AI 生成立绘；此公开版本不包含语音
         · 心情系统：多点她、投喂大葱会开心；冷落会低落
         · 深夜 0-7 点会自动睡觉；整点会报时问候
 
-        版权说明：初音未来 Hatsune Miku © Crypton Future Media, INC.，
-        本应用仅供个人学习与娱乐的非商业用途。
+        Hatsune Miku, © Crypton Future Media, Inc. 2007
+        角色二创：CC BY-NC 3.0，仅限非商业用途。
+        https://creativecommons.org/licenses/by-nc/3.0/
+        官方规则：https://piapro.net/intl/en_for_creators.html
+        原创代码采用 MIT；本项目为非官方同人项目。
         """
         alert.runModal()
     }
@@ -1575,6 +1585,29 @@ enum LaunchAgent {
 // MARK: - 入口
 
 let app = NSApplication.shared
+
+// Resource/render smoke test: no preferences, location requests or login changes.
+if CommandLine.arguments.contains("--smoke-test") {
+    var count = 0
+    guard !SoundManager.shared.available, !SoundManager.shared.enabled else {
+        fputs("SMOKE: public bundle unexpectedly contains voice resources\n", stderr); exit(1)
+    }
+    for skin in ["standard", "chibi", "crayon"] {
+        guard SkinSet(name: skin) != nil else { fputs("SMOKE: missing skin\n", stderr); exit(1) }
+        for state in ["idle", "blink", "happy", "sad", "sleep"] {
+            autoreleasepool {
+                guard let clip = PetMotionClip(skin: skin, state: state), clip.frames.count == 48 else {
+                    fputs("SMOKE: invalid animation\n", stderr); exit(1)
+                }
+                let frame = clip.frame(at: 0.5)
+                guard frame.bitmap.pixelsWide > 0 else { exit(1) }
+                count += clip.frames.count
+            }
+        }
+    }
+    print("SMOKE: 15 skins/states, \(count) animation frames decoded; no audio")
+    exit(0)
+}
 
 // 单实例保护
 if let id = Bundle.main.bundleIdentifier,
