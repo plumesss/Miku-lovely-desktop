@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>MikuDeskPet</string>
+	<key>CFBundleDisplayName</key>
+	<string>初音桌宠</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.miku.deskpet</string>
+	<key>CFBundleExecutable</key>
+	<string>MikuDeskPet</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>用于获取你所在地区的天气，并在桌宠上显示下雪或晴天效果。</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>13.0</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Hatsune Miku © Crypton Future Media, INC. 仅限个人非商业使用</string>
+</dict>
+</plist>

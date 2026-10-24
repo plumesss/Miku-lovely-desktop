@@ -1,0 +1,6 @@
+const keys=['skin','size','opacity','volume','motion','sound','hourly','login','city','weather'];
+function show(prefs){for(const key of keys){const el=document.getElementById(key);if(el.type==='checkbox')el.checked=!!prefs[key];else el.value=prefs[key];}values();}
+function values(){for(const key of ['size','opacity','volume']){const n=Number(document.getElementById(key).value);document.getElementById(key+'Value').textContent=key==='size'?n+' px':Math.round(n*100)+'%';}}
+petAPI.getConfig().then(show);petAPI.onConfig(show);
+for(const key of keys){const el=document.getElementById(key);el.addEventListener('input',values);el.addEventListener('change',async()=>{let v=el.type==='checkbox'?el.checked:el.type==='range'?Number(el.value):el.value;try{await petAPI.setConfig({[key]:v});document.getElementById('status').textContent='已保存。右键桌宠可打开菜单或退出。';}catch(e){document.getElementById('status').textContent='保存失败，请重试：'+e.message;}});}
+document.getElementById('speech').onclick=()=>petAPI.action('speech');document.getElementById('feed').onclick=()=>petAPI.action('feed');

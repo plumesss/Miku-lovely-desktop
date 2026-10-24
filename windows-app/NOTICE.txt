@@ -1,0 +1,11 @@
+初音桌宠 · 代码与素材许可说明
+
+项目原创代码及文档采用 MIT License。
+Copyright (c) 2026 MikuDeskPet contributors
+完整许可证见项目根目录 LICENSE。
+
+Hatsune Miku © Crypton Future Media, INC.
+角色、图像、语音等素材的权利归各自权利人所有。
+角色、图片、动画、语音和图标不因代码采用 MIT 而获得 MIT 授权。
+原应用包含“仅限个人非商业使用”声明；这不代表已获得公开再分发许可。
+素材来源与授权核实情况见项目根目录 THIRD_PARTY_NOTICES.md。

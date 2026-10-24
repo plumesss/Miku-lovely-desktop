@@ -1,0 +1,66 @@
+# macOS and editors
+.DS_Store
+._*
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local configuration and signing credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+.npmrc
+.netrc
+.pypirc
+id_rsa
+id_ed25519
+
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Node dependencies and logs
+node_modules/
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+*.dmg
+*.exe
+*.blockmap
+builder-debug.yml
+
+# Runtime user data
+preferences.json
+Cookies
+Cookies-journal
+Login Data
+Local State
+
+# Build products, installers, and local backups
+/MikuDeskPet
+/MikuDeskPet.app/
+/分享安装包/
+/backups/
+dist/
+build/
+
+# Local-only media: redistribution permission has not been verified.
+# See docs/ASSETS.md before building or restoring resources.
+/assets/
+/sounds/
+/src/AppIcon.icns
+/src/AppIcon.iconset/
+/windows-app/assets/
+/windows-app/app.ico
+/local-art/
